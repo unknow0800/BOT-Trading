@@ -1,131 +1,132 @@
-# 🤖 Bot de Trading Expert — Binance Testnet
+# Bot de Trading Algorithmique
+
+**Bot de trading quantitatif multi-marchés combinant analyse technique multi-timeframe, gestion du risque avancée et un modèle de deep learning hybride (LSTM + Transformer).**
+
+Deux moteurs distincts : un bot crypto sur **Binance Testnet** (BTC/USDT) et un bot actions/ETF sur **Alpaca Paper Trading**, couvrant plusieurs secteurs US (tech, semi-conducteurs, banques, santé, consommation...).
+
+## Fonctionnalités principales
+
+- **Stratégie multi-timeframe** : tendance macro, signal d'entrée et exécution sur trois horizons distincts (ex. 1H / 30M / 5M)
+- **Indicateurs techniques** : RSI, SMA (croisement rapide/lent), ATR, OBV, VWAP, détection de pics de volume, niveaux de swing
+- **Gestion du risque** : sizing basé sur l'ATR, stop-loss et take-profit dynamiques, trailing stop, scale-out partiel, passage à breakeven, garde-fou de drawdown maximum
+- **Filtre horaire** : évite les périodes de faible liquidité (nuit UTC)
+- **Modèle de deep learning hybride** (PyTorch) : architecture LSTM + Transformer entraînée sur les features techniques pour affiner les signaux
+- **Backtesting** : moteur simple ou vectorisé (vectorbt) avec calcul de métriques (Sharpe ratio, drawdown, win rate)
+- **Journalisation complète** : trades en CSV, métriques de performance en JSON, logs d'exécution
+- **Module Alpaca avancé** : intelligence de marché et de portefeuille, ranking de setups, revue de trades, watchlist dynamique
+
+## Stack technique
+
+| Composant | Technologie |
+|---|---|
+| Trading crypto | python-binance (Testnet) |
+| Trading actions | alpaca-py (Paper Trading) |
+| Analyse technique | ta, pandas, numpy |
+| Deep learning | PyTorch (LSTM + Transformer) |
+| Backtesting | vectorbt |
+| Scoring additionnel | tradingview-ta |
 
 ## Architecture
 
 ```
-bot_expert/
-├── config.py        → Tous les paramètres centralisés
-├── data.py          → Données multi-timeframe (4H, 30M, 5M)
-├── indicators.py    → RSI, SMA, ATR, OBV, VWAP, Volume spike, Swing levels
-├── strategy.py      → Signal multi-timeframe + filtre horaire
-├── risk.py          → Sizing ATR, trailing stop, scale-out, breakeven, drawdown guard
-├── execution.py     → Ordres Binance (buy/sell/scale-out)
-├── logger.py        → Journal CSV des trades + métriques JSON (Sharpe, DD, win rate)
-├── backtest.py      → Backtest vectorisé (vectorbt) ou simple
-├── main.py          → Boucle principale
-└── requirements.txt
+Bot de finance/
+├── config.py              # Paramètres centralisés (risque, indicateurs, timeframes)
+├── data.py                  # Récupération des données multi-timeframe
+├── indicators.py            # Calcul des indicateurs techniques
+├── strategy.py               # Génération de signaux multi-timeframe + filtre horaire
+├── risk.py                    # Sizing, stops, trailing, scale-out, drawdown guard
+├── execution.py                # Passage d'ordres (achat/vente/scale-out)
+├── logger.py                    # Journal CSV des trades + métriques JSON
+├── backtest.py                   # Backtest vectorisé ou simple
+├── bot.py / main.py               # Boucle principale du bot crypto
+│
+├── ml/
+│   ├── features.py            # Extraction des features pour le modèle
+│   ├── model.py                 # Architecture LSTM + Transformer
+│   ├── predictor.py              # Inférence du modèle entraîné
+│   └── train.py                   # Entraînement du modèle
+│
+└── alpaca/
+    ├── config_alpaca.py        # Configuration Alpaca (univers d'actifs, secrets)
+    ├── data_alpaca.py            # Données multi-actifs Alpaca
+    ├── strategy_alpaca.py         # Stratégie adaptée actions/ETF
+    ├── market_intelligence.py      # Analyse de contexte marché
+    ├── portfolio_intelligence.py    # Analyse du portefeuille
+    ├── decision_logger.py            # Journalisation des décisions
+    └── main_alpaca.py                # Boucle principale du bot Alpaca
 ```
-
----
 
 ## Installation
 
 ```bash
+git clone https://github.com/unknow0800/BOT-Trading.git
+cd "Bot de finance"
+python -m venv .venv
+.venv\Scripts\activate       # Windows
 pip install -r requirements.txt
 ```
 
----
+## Configuration
 
-## Configuration Binance Testnet
+Aucune clé n'est codée en dur dans le code : tout passe par variables d'environnement.
 
-1. Va sur https://testnet.binance.vision
-2. Connecte-toi avec GitHub
-3. Génère tes clés API testnet
-4. Configure les variables d'environnement :
-
+**Binance Testnet** — clés à générer sur https://testnet.binance.vision :
 ```bash
-export BINANCE_TESTNET_API_KEY="ta_cle_testnet"
-export BINANCE_TESTNET_API_SECRET="ton_secret_testnet"
+setx BINANCE_TESTNET_API_KEY "ta_cle_testnet"
+setx BINANCE_TESTNET_API_SECRET "ton_secret_testnet"
 ```
 
----
-
-## Lancer le bot
-
+**Alpaca Paper Trading** — clés à générer sur https://app.alpaca.markets/paper/dashboard/overview :
 ```bash
-cd bot_expert
+setx ALPACA_API_KEY "ta_cle_alpaca"
+setx ALPACA_API_SECRET "ton_secret_alpaca"
+```
+
+## Utilisation
+
+**Bot crypto (Binance Testnet)**
+```bash
 python main.py
 ```
 
----
-
-## Lancer le backtest
-
+**Bot actions (Alpaca Paper Trading)**
 ```bash
-# Backtest simple (sans vectorbt)
+cd alpaca
+python main_alpaca.py
+```
+
+**Backtest**
+```bash
+# Version simple
 python backtest.py --symbol BTCUSDT --interval 30m --start 2023-01-01 --simple
 
-# Backtest avancé (vectorbt requis)
+# Version avancée (vectorbt requis)
 python backtest.py --symbol BTCUSDT --interval 30m --start 2023-01-01 --cash 10000
 ```
 
----
-
-## Stratégie
-
-### Analyse multi-timeframe
-
-| Timeframe | Rôle |
-|-----------|------|
-| **4H** | Filtre de tendance macro (SMA50/200, OBV) |
-| **30M** | Signal d'entrée (RSI, VWAP, Volume spike) |
-| **5M** | Futur : scalping/entrée précise (réservé) |
-
-### Conditions d'entrée (toutes requises)
-
-- ✅ Tendance 4H haussière : `close > SMA50 > SMA200` + OBV haussier
-- ✅ RSI(14) croise au-dessus de 30 sur 30M
-- ✅ Prix au-dessus du VWAP
-- ✅ OBV > signal OBV (pression acheteuse)
-- ✅ Heure UTC valide (pas entre 22h-06h)
-
-### Gestion de la position
-
-| Événement | Action |
-|-----------|--------|
-| +1R atteint | SL déplacé au breakeven |
-| TP1 = entry + 4×ATR | Vente de 50% (scale-out) |
-| TP2 = entry + 8×ATR | Fermeture totale |
-| SL = entry - 2×ATR | Stop-loss adaptatif |
-| Trailing activé | Suit le prix après breakeven |
-| RSI > 70 ou prix < SMA50 | Sortie stratégique |
-
-### Protection globale
-
-- **Max drawdown** : bot s'arrête si DD > 10%
-- **Filtre horaire** : inactif 22h-06h UTC
-- **1 trade max** à la fois
-
----
-
-## Fichiers de logs
-
-```
-logs/
-├── bot.log                    → Log temps réel (console + fichier)
-├── trades.csv                 → Journal de chaque trade
-├── performance.json           → Métriques (Sharpe, win rate, drawdown...)
-├── backtest_trades.csv        → Trades du backtest
-└── backtest_equity.csv        → Equity curve du backtest
+**Entraînement du modèle de deep learning**
+```bash
+python ml/train.py
 ```
 
----
+## Gestion du risque
 
-## Paramètres modifiables (config.py)
+- Risque maximum par trade : paramétrable (`RISK_PER_TRADE_PCT`)
+- Sizing dynamique basé sur l'ATR
+- Stop-loss et take-profit calculés à partir de multiples d'ATR
+- Passage automatique à breakeven après un seuil de R multiple atteint
+- Scale-out partiel à mi-parcours
+- Garde-fou de drawdown maximum pour stopper le bot en cas de perte excessive
+- Nombre de positions ouvertes simultanées limité
 
-| Paramètre | Défaut | Description |
-|-----------|--------|-------------|
-| `RISK_PER_TRADE_PCT` | 1% | Risque par trade |
-| `ATR_SL_MULTIPLIER` | 2.0 | Multiplicateur ATR pour le SL |
-| `ATR_TP_MULTIPLIER` | 4.0 | Multiplicateur ATR pour TP1 |
-| `MAX_DRAWDOWN_PCT` | 10% | Drawdown maximum avant arrêt |
-| `SCALE_OUT_PCT` | 50% | % vendu au TP1 |
-| `AVOID_HOURS_UTC` | 22h-06h | Heures inactives |
+## Avertissement
 
----
+Ce projet est un outil d'expérimentation personnelle et pédagogique. Il fonctionne exclusivement en **environnement testnet / paper trading** — aucun ordre réel n'est passé avec de l'argent réel. Il ne constitue en aucun cas un conseil en investissement.
 
-## ⚠️ Avertissement
+## Sécurité
 
-Ce bot est conçu **exclusivement pour le paper trading** sur Binance Testnet.
-Le trading de cryptomonnaies comporte des risques élevés.
-Ne jamais utiliser ce code en production sans tests approfondis.
+Aucune clé API réelle n'est présente dans ce dépôt. Tous les secrets (clés Binance, Alpaca, Finnhub, FMP) sont exclus via `.gitignore` et doivent être fournis via variables d'environnement ou fichier local non commité.
+
+## Licence
+
+MIT
