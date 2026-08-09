@@ -1,0 +1,20 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Logs et résultats runtime
+logs/
+alpaca/logs/
+
+# Modèles entraînés et artefacts ML
+ml/model.pt
+ml/scaler.pkl
+
+# Secrets
+alpaca/secrets_alpaca.json
+cle_api.jsonl
+SECREAT_KEY.jsonl
+.env
+.env.*
+!.env.example
